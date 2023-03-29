@@ -1,6 +1,7 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, FromRequest};
 use serde::{Serialize, Deserialize};
 use tokio::{fs::File, io::AsyncWriteExt};
+use tokio::io::AsyncReadExt;
 use serde_json;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -25,6 +26,27 @@ struct FormData {
     isPointerMeter: Option<String>,
     isMultiRegionMeter: Option<String>,
     result: Option<String>
+}
+
+#[derive(Serialize, Deserialize)]
+struct State {
+    ts: i64,
+    val: f64,
+}
+
+async fn write_state(state: &State) -> std::io::Result<()> {
+    let mut file = File::create("current_state.dat").await?;
+    let serialized = serde_json::to_string(state)?;
+    file.write_all(serialized.as_bytes()).await?;
+    Ok(())
+}
+
+async fn read_state() -> std::io::Result<State> {
+    let mut file = File::open("current_state.dat").await?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).await?;
+    let deserialized: State = serde_json::from_slice(&buffer)?;
+    Ok(deserialized)
 }
 
 #[get("/")]
@@ -60,6 +82,16 @@ async fn post_func(form: web::Form<FormData>) -> impl Responder {
         let str_val = format!("{}.{}", integer_val, decimal_val);
         println!("meter value:{}", str_val);
         let float_val: f64 = str_val.parse().unwrap();
+
+        let state: State = match read_state().await {
+            Ok(state) => state,
+            Err(e) => State{ts:0, val:0.0}
+        };
+
+        let val_diff = if state.ts > 0 { float_val - state.val } else { 0.0 };
+        let ts_diff = if state.ts > 0 { ts - state.ts } else { 0 };
+        let c2 = if state.ts > 0 { val_diff/(ts_diff as f64/(3600.0 * 1000.0) as f64) } else {0.0};
+
         let url = format!("http://api.heclouds.com/devices/{}/datapoints", "507319845");
         let client = reqwest::Client::new();
         let mut headers = HeaderMap::new();
@@ -72,6 +104,14 @@ async fn post_func(form: web::Form<FormData>) -> impl Responder {
           "datapoints": [{
                 "at": trans_ct.as_str(),
                   "value": float_val
+            },
+          ]
+        },
+        {
+            "id": "C2",
+          "datapoints": [{
+                "at": trans_ct.as_str(),
+                  "value": c2
             },
           ]
         }
