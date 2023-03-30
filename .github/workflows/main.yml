@@ -37,7 +37,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [x86_64-unknown-linux-musl]
+        include:
+          - target: x86_64-unknown-linux-musl
+            archive: tar.gz tar.xz tar.zst
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
@@ -46,26 +48,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           RUSTTARGET: ${{ matrix.target }}
-          
-      - name: Strip binary (linux and macos)
-        run: strip "target/${{ matrix.target }}/release/shuibiao"
-
-      - name: Build archive
-        shell: bash
-        run: |
-          mkdir archive
-          cp README.md archive/
-          cd archive
-          cp "../target/${{ matrix.target }}/release/shuibiao" ./
-          tar -czf "${{ matrix.target }}" README.md shuibiao
-      - name: Upload archive
-        uses: actions/upload-artifact@v1
+          UPLOAD_MODE: none
+          MINIFY: true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.target }}
-          path: archive/${{ matrix.target }}
-          # (required) GitHub token for uploading assets to GitHub Releases.
-          token: ${{ secrets.GITHUB_TOKEN }}
-          
-          
+          name: Binary
+          path: |
+            ${{ steps.compile.outputs.BUILT_ARCHIVE }}
+            ${{ steps.compile.outputs.BUILT_CHECKSUM }}
     
   
