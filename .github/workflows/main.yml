@@ -30,7 +30,7 @@ jobs:
               tag_name: `app-v${process.env.PACKAGE_VERSION}`,
               name: `Musl Executable v${process.env.PACKAGE_VERSION}`,
               body: 'Take a look at the assets to download and install this app.',
-              draft: true,
+              draft: false,
               prerelease: false
             })
             return data.id
@@ -69,6 +69,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: process.env.release_id,
-              draft: true,
+              draft: false,
               prerelease: false
             })
