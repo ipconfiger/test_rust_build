@@ -55,8 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Strip binary (linux and macos)
-        if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip "target/${{ matrix.target }}/release/shuibiao"
+        run: strip "target/x86_64-unknown-linux-musl/release/shuibiao"
 
       - name: Build archive
         shell: bash
@@ -64,13 +63,13 @@ jobs:
           mkdir archive
           cp README.md archive/
           cd archive
-          cp "../target/${{ matrix.target }}/release/shuibiao" ./
-          tar -czf "${{ matrix.archive-name }}" README.md shuibiao
+          cp "../target/x86_64-unknown-linux-musl/release/shuibiao" ./
+          tar -czf "x86_64-unknown-linux-musl" README.md shuibiao
       - name: Upload archive
         uses: actions/upload-artifact@v1
         with:
-          name: ${{ matrix.archive-name }}
-          path: archive/${{ matrix.archive-name }}
+          name: x86_64-unknown-linux-musl
+          path: archive/x86_64-unknown-linux-musl
           # (required) GitHub token for uploading assets to GitHub Releases.
           token: ${{ secrets.GITHUB_TOKEN }}
           
