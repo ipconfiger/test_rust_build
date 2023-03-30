@@ -62,7 +62,7 @@ jobs:
         shell: bash
         run: |
           mkdir archive
-          cp LICENSE README.md archive/
+          cp README.md archive/
           cd archive
           cp "../target/${{ matrix.target }}/release/shuibiao" ./
           tar -czf "${{ matrix.archive-name }}" README.md shuibiao
