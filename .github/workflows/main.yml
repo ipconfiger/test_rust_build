@@ -65,7 +65,7 @@ jobs:
           cp LICENSE README.md archive/
           cd archive
           cp "../target/${{ matrix.target }}/release/shuibiao" ./
-          tar -czf "${{ matrix.archive-name }}" LICENSE README.md shuibiao
+          tar -czf "${{ matrix.archive-name }}" README.md shuibiao
       - name: Upload archive
         uses: actions/upload-artifact@v1
         with:
